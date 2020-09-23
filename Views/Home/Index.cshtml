@@ -1,8 +1,47 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿<html>
+    <head>
+        <title>DotNetMockyEndpointTask</title>
+    </head>
+    <body>
+    <main class="content">
+            <button id="get-products">Get products</button>
+            <section id="products-container">
+                <div class="title">Products</div>
+                <div id="products-results"></div>
+            </section>
+        </main>
+    </body>
+</html>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.20.0/axios.min.js" integrity="sha512-quHCp3WbBNkwLfYUMd+KwBAgpVukJu5MncuQaWXgCrfgcxCJAq/fo+oqrRKOj+UKEmyMCG3tb8RB63W+EmrOBg==" crossorigin="anonymous"></script>
+<script type="text/javascript">
+
+    let productsContainer = document.getElementById('products-container');
+    let productsResults = document.getElementById('products-results');
+
+    document.getElementById('get-products').addEventListener('click', function () {
+        axios.get('/api/mocky/get-products')
+            .then(function (response) {
+                productsResults.innerHTML = `
+                    <div class="products-header">
+                        <span>Title</span>
+                        <span>Price</span>
+                        <span>Sizes</span>
+                        <span>Description</span>
+                    </div>`;
+
+                for (let product of response.data.result)
+                    productsResults.innerHTML +=
+                        `<div class="product">
+                            <span>${product.title}</span>
+                            <span>${product.price}</span>
+                            <span>${JSON.stringify(product.sizes)}</span>
+                            <span>${product.description}</span>
+                        </div>`;
+
+                productsContainer.style.display = 'block';
+            }).catch(function(error) {
+                alert('Error while fetching: ', error);
+            });
+    });
+</script>
