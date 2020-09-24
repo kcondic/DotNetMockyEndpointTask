@@ -39,6 +39,7 @@ namespace DotNetMockyEndpointTask
             services.AddMemoryCache();
 
             services.AddSingleton(Configuration);
+            services.AddScoped<ProductsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

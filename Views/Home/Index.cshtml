@@ -3,7 +3,29 @@
         <title>DotNetMockyEndpointTask</title>
     </head>
     <body>
-    <main class="content">
+        <main class="content">
+            <section class="filter-controls">
+                <section class="filter-control">
+                    <label for="max-price">Max price (leave empty/0 to not filter by price)</label>
+                    <input type="number" min="0" step="1" id="max-price" />
+                </section>
+
+                <section class="filter-control">
+                    <input type="radio" name="size" id="none" value="" checked />
+                    <label for="none">Don't filter by size</label>
+                    <input type="radio" name="size" id="small" value="small" />
+                    <label for="small">Small</label>
+                    <input type="radio" name="size" id="medium" value="medium" />
+                    <label for="medium">Medium</label>
+                    <input type="radio" name="size" id="large" value="large" />
+                    <label for="large">Large</label>
+                </section>
+
+                <section class="filter-control">
+                    <label for="words-to-highlight">Comma delimited list of words to highlight. Leave empty if no words should be highlighted.</label>
+                    <input type="text" id="words-to-highlight" />
+                </section>
+            </section>
             <button id="get-products">Get products</button>
             <section id="products-container">
                 <div class="title">Products</div>
@@ -19,9 +41,38 @@
     let productsContainer = document.getElementById('products-container');
     let productsResults = document.getElementById('products-results');
 
+    let wordsToHighlightInput = document.getElementById('words-to-highlight');
+    let whitespaceRegex = /\s/g;
+
+    let maxPriceInput = document.getElementById('max-price');
+
     document.getElementById('get-products').addEventListener('click', function () {
-        axios.get('/api/mocky/get-products')
-            .then(function (response) {
+        let wordsToHighlightValue = wordsToHighlightInput.value;
+
+        if (whitespaceRegex.test(wordsToHighlightValue)) {
+            alert('Spaces are not allowed in words to highlight');
+            return;
+        }
+
+        let maxPriceValue = maxPriceInput.value;
+
+        let selectedSizeValue = document.querySelector('input[name="size"]:checked').value;
+
+        let parameters = {};
+
+        if (wordsToHighlightValue)
+            parameters.wordsToHighlight = wordsToHighlightValue;
+
+        if (maxPriceValue)
+            parameters.maxPrice = maxPriceValue;
+
+        if (selectedSizeValue)
+            parameters.size = selectedSizeValue;
+
+
+        axios.get('/api/mocky/get-products', {
+                params: parameters
+            }).then(function (response) {
                 productsResults.innerHTML = `
                     <div class="products-header">
                         <span>Title</span>
@@ -30,7 +81,7 @@
                         <span>Description</span>
                     </div>`;
 
-                for (let product of response.data.result)
+                for (let product of response.data)
                     productsResults.innerHTML +=
                         `<div class="product">
                             <span>${product.title}</span>
@@ -40,8 +91,8 @@
                         </div>`;
 
                 productsContainer.style.display = 'block';
-            }).catch(function(error) {
-                alert('Error while fetching: ', error);
+            }).catch(function (error) {
+                alert(error);
             });
     });
 </script>
