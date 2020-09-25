@@ -25,7 +25,14 @@ namespace DotNetMockyEndpointTask.Controllers.API
 
             var filteredAndHighlightedProducts = _productsService.FilterAndHighlightProducts(products, maxPrice, size, wordsToHighlight);
 
-            return Ok(filteredAndHighlightedProducts);
+            //not sure from task if products or filteredAndHighlightedProducts are to be passed here...
+            var productAggregateInfo = _productsService.AggregateProducts(products);
+
+            return Ok(new
+            {
+                Products = filteredAndHighlightedProducts,
+                AggregatedProducts = productAggregateInfo
+            });
         }
     }
 }

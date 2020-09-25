@@ -13,16 +13,41 @@ namespace DotNetMockyEndpointTask.Services
         // but decided not to complicate with enum handling in a project like this and think that this would probably never change so it's okay to keep it like this
         private List<string> _availableSizes = new List<string>{"small", "medium", "large"};
 
-        // Find words by looking at word boundary \b at both sides. Won't work for hyphens correctly (e.g. will recognize shirt in t-shirt) but other than that it's okay
-        private const string _wordRegex = @"\b{0}\b";
-
         public List<Product> FilterAndHighlightProducts(List<Product> fetchedProducts, int? maxPrice, string size, string wordsToHighlight)
         {
-            _products = fetchedProducts;
+            // make deep copy so mutation doesn't affect cached items
+            _products = fetchedProducts.ConvertAll(prod => new Product
+            {
+                Title = prod.Title,
+                Price = prod.Price,
+                Sizes = prod.Sizes,
+                Description = prod.Description
+            });
+
             FilterProductsByMaxPrice(maxPrice);
             FilterProductsBySize(size);
             HighlightWordsInDescriptionsOfProducts(wordsToHighlight);
             return _products.ToList();
+        }
+
+        public ProductListAggregate AggregateProducts(List<Product> fetchedProducts)
+        {
+            _products = fetchedProducts;
+
+            var minPrice = GetMinProductPrice();
+            var maxPrice = GetMaxProductPrice();
+
+            var allSizes = GetAllProductSizes();
+
+            var mostCommonWords = GetMostCommonWords();
+
+            return new ProductListAggregate
+            {
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                AllSizes = allSizes,
+                MostCommonWordsInDescriptions = mostCommonWords
+            };
         }
 
         private void FilterProductsByMaxPrice(int? maxPrice)
@@ -47,11 +72,42 @@ namespace DotNetMockyEndpointTask.Services
                 return;
 
             var wordsToHighlight = wordsToHighlightString.Split(',');
+
             foreach (var product in _products)
-            {
                 foreach(var word in wordsToHighlight)
-                    product.Description = Regex.Replace(product.Description, string.Format(_wordRegex, word), $"<em>{word}</em>");
-            }
+                    product.Description = Regex.Replace(product.Description, $@"\b({word})\b", $@"<em>${{1}}</em>", RegexOptions.IgnoreCase);
+        }
+
+        private int GetMinProductPrice()
+        {
+            return _products.Min(prod => prod.Price);
+        }
+
+        private int GetMaxProductPrice()
+        {
+            return _products.Max(prod => prod.Price);
+        }
+
+        private List<string> GetAllProductSizes()
+        {
+            return _products.SelectMany(prod => prod.Sizes).Distinct().ToList();
+        }
+
+        private List<string> GetMostCommonWords()
+        {
+            //take all descriptions, flatten them and split into word list according to regex boundary and filter only words (eliminate interpunction and whitespace)
+            var allWords = _products.Select(prod => prod.Description).SelectMany(desc => Regex.Split(desc, @"\b")).Where(word => Regex.IsMatch(word, @"\b"));
+
+            var mostCommonWords = allWords
+                .GroupBy(word => word)
+                .OrderByDescending(wordGroup => wordGroup.Count())
+                .ThenBy(wordGroup => wordGroup.Key)
+                .Skip(5)
+                .Take(10)
+                .Select(wordGroup => wordGroup.Key)
+                .ToList();
+
+            return mostCommonWords;
         }
     }
 }

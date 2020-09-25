@@ -1,6 +1,76 @@
 ﻿<html>
     <head>
         <title>DotNetMockyEndpointTask</title>
+        <style>
+            * {
+                font-family: 'Arial';
+            }
+
+            .content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px 50px 0;
+            }
+
+            .filter-controls {
+                margin-bottom: 20px;
+            }
+
+            .filter-control {
+                margin-bottom: 12px;
+            }
+
+            .filter-control input[name="size"] ~ label {
+                margin-right: 12px;
+                cursor: pointer;
+            }
+
+            #get-products {
+                margin-bottom: 12px;
+                cursor: pointer;
+                background: gray;
+                padding: 6px 12px;
+                outline: none;
+                border: none;
+                color: white;
+                border-radius: 6px;
+            }
+
+            .results-wrapper {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .results-wrapper section {
+                display: none;
+                margin-bottom: 40px;
+            }
+
+            .results-wrapper section .title {
+                font-size: 20px;
+                margin-bottom: 12px;
+                text-transform: uppercase;
+            }
+
+            .products-header span, .product span {
+                display: inline-block;
+                width: 20%;
+                margin-bottom: 6px;
+            }
+
+            .products-header span, .product span em {
+                font-weight: 700;
+            }
+
+            .aggregate-entry {
+                margin-bottom: 6px;
+            }
+
+            .raw-results {
+
+            }
+        </style>
     </head>
     <body>
         <main class="content">
@@ -27,9 +97,19 @@
                 </section>
             </section>
             <button id="get-products">Get products</button>
-            <section id="products-container">
-                <div class="title">Products</div>
-                <div id="products-results"></div>
+            <section class="results-wrapper">
+                <section id="products-container">
+                    <div class="title">Products</div>
+                    <div id="products-results"></div>
+                </section>
+                <section id="aggregate-container">
+                    <div class="title">Aggregated products</div>
+                    <div id="aggregate-results"></div>
+                </section>
+                <section id="raw-container">
+                    <div class="title">Here's the raw JSON response if you need it</div>
+                    <div id="raw-results"></div>
+                </section>
             </section>
         </main>
     </body>
@@ -40,6 +120,12 @@
 
     let productsContainer = document.getElementById('products-container');
     let productsResults = document.getElementById('products-results');
+
+    let aggregateContainer = document.getElementById('aggregate-container');
+    let aggregateResults = document.getElementById('aggregate-results');
+
+    let rawContainer = document.getElementById('raw-container');
+    let rawResults = document.getElementById('raw-results');
 
     let wordsToHighlightInput = document.getElementById('words-to-highlight');
     let whitespaceRegex = /\s/g;
@@ -73,24 +159,43 @@
         axios.get('/api/mocky/get-products', {
                 params: parameters
             }).then(function (response) {
-                productsResults.innerHTML = `
-                    <div class="products-header">
-                        <span>Title</span>
-                        <span>Price</span>
-                        <span>Sizes</span>
-                        <span>Description</span>
-                    </div>`;
+                if (response.data && response.data.products && response.data.products.length) {
+                    productsResults.innerHTML = `
+                            <div class="products-header">
+                                <span>Title</span>
+                                <span>Price</span>
+                                <span>Sizes</span>
+                                <span>Description</span>
+                            </div>`;
 
-                for (let product of response.data)
-                    productsResults.innerHTML +=
-                        `<div class="product">
-                            <span>${product.title}</span>
-                            <span>${product.price}</span>
-                            <span>${JSON.stringify(product.sizes)}</span>
-                            <span>${product.description}</span>
-                        </div>`;
+                    for (let product of response.data.products)
+                        productsResults.innerHTML +=
+                            `<div class="product">
+                                <span>${product.title}</span>
+                                <span>${product.price}</span>
+                                <span>${JSON.stringify(product.sizes)}</span>
+                                <span>${product.description}</span>
+                            </div>`;
+                } else
+                    productsResults.innerHTML = 'No products for given params.';
+
+                if (response.data && response.data.aggregatedProducts) {
+                    let aggregates = response.data.aggregatedProducts;
+                    aggregateResults.innerHTML =
+                            `<div class="aggregate-entry">Minimal price of all products: ${aggregates.minPrice}</div>
+                             <div class="aggregate-entry">Maximal price of all products: ${aggregates.maxPrice}</div>
+                             <div class="aggregate-entry">All sizes of all products: ${JSON.stringify(aggregates.allSizes)}</div>
+                             <div class="aggregate-entry">10 most common words in all descriptions excluding top 5, ordered by count and then alphabetically: ${JSON.stringify(aggregates.mostCommonWordsInDescriptions)}</div>
+                            `;
+                } else 
+                    aggregateResults.innerHTML = 'No aggregates available.';
+
+                if (response.data)
+                    rawResults.innerHTML = `<div class="raw-results">${JSON.stringify(response.data)}</div>`;
 
                 productsContainer.style.display = 'block';
+                aggregateContainer.style.display = 'block';
+                rawContainer.style.display = 'block';
             }).catch(function (error) {
                 alert(error);
             });
