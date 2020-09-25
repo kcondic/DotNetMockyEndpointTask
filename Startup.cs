@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -36,6 +37,12 @@ namespace DotNetMockyEndpointTask
             });
 
             services.AddMemoryCache();
+
+            services.AddLogging(opt =>
+            {
+                var loggingSection = Configuration.GetSection("Logging");
+                opt.AddFile(loggingSection);
+            }); 
 
             services.AddSingleton(Configuration);
             services.AddScoped<ProductsService>();

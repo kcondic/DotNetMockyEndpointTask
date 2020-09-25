@@ -2,16 +2,25 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using DotNetMockyEndpointTask.Models;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using NReco.Logging.File;
 
 namespace DotNetMockyEndpointTask.Services
 {
     public class ProductsService
     {
+        public ProductsService(ILogger<FileLogger> logger)
+        {
+            _logger = logger;
+        }
+        private readonly ILogger<FileLogger> _logger;
+
         private IEnumerable<Product> _products;
 
         // could maybe be an enum or configurable in appsettings,
         // but decided not to complicate with enum handling in a project like this and think that this would probably never change so it's okay to keep it like this
-        private List<string> _availableSizes = new List<string>{"small", "medium", "large"};
+        private readonly List<string> _availableSizes = new List<string>{"small", "medium", "large"};
 
         public List<Product> FilterAndHighlightProducts(List<Product> fetchedProducts, int? maxPrice, string size, string wordsToHighlight)
         {
@@ -27,6 +36,9 @@ namespace DotNetMockyEndpointTask.Services
             FilterProductsByMaxPrice(maxPrice);
             FilterProductsBySize(size);
             HighlightWordsInDescriptionsOfProducts(wordsToHighlight);
+
+            _logger.Log(LogLevel.Information, $"Filtered products, returned {_products.Count()} products");
+            
             return _products.ToList();
         }
 
@@ -41,13 +53,16 @@ namespace DotNetMockyEndpointTask.Services
 
             var mostCommonWords = GetMostCommonWords();
 
-            return new ProductListAggregate
-            {
+            var aggregate = new ProductListAggregate {
                 MinPrice = minPrice,
                 MaxPrice = maxPrice,
                 AllSizes = allSizes,
                 MostCommonWordsInDescriptions = mostCommonWords
             };
+
+            _logger.Log(LogLevel.Information, $"Aggregated products, response: {JsonConvert.SerializeObject(aggregate)}");
+
+            return aggregate;
         }
 
         private void FilterProductsByMaxPrice(int? maxPrice)
