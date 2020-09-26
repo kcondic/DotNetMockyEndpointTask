@@ -1,7 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using DotNetMockyEndpointTask.Models;
-using DotNetMockyEndpointTask.Services;
+﻿using System.Threading.Tasks;
+using DotNetMockyEndpointTask.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DotNetMockyEndpointTask.Controllers.API
@@ -10,13 +8,13 @@ namespace DotNetMockyEndpointTask.Controllers.API
     [ApiController]
     public class MockyController : ControllerBase
     {
-        public MockyController(MockyApiService mockyApiService, ProductsService productsService)
+        public MockyController(IMockyApiService mockyApiService, IProductsService productsService)
         {
             _mockyApiService = mockyApiService;
             _productsService = productsService;
         }
-        private readonly MockyApiService _mockyApiService;
-        private readonly ProductsService _productsService;
+        private readonly IMockyApiService _mockyApiService;
+        private readonly IProductsService _productsService;
 
         [HttpGet("get-products")]
         public async Task<IActionResult> GetProducts(int? maxPrice = null, string size = null, string wordsToHighlight = null)

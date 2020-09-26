@@ -2,13 +2,14 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 using DotNetMockyEndpointTask.Models;
+using DotNetMockyEndpointTask.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NReco.Logging.File;
 
 namespace DotNetMockyEndpointTask.Services
 {
-    public class ProductsService
+    public class ProductsService : IProductsService
     {
         public ProductsService(ILogger<FileLogger> logger)
         {

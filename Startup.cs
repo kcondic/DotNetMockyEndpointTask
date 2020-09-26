@@ -1,5 +1,6 @@
 using System;
 using DotNetMockyEndpointTask.Services;
+using DotNetMockyEndpointTask.Services.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +32,7 @@ namespace DotNetMockyEndpointTask
                 options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
 
-            services.AddHttpClient<MockyApiService>(client =>
+            services.AddHttpClient<IMockyApiService, MockyApiService>(client =>
             {
                 client.BaseAddress = new Uri(Configuration["MockyApi:Url"]);
             });
@@ -45,7 +46,7 @@ namespace DotNetMockyEndpointTask
             }); 
 
             services.AddSingleton(Configuration);
-            services.AddScoped<ProductsService>();
+            services.AddScoped<IProductsService, ProductsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

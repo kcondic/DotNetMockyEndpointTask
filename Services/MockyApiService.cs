@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using DotNetMockyEndpointTask.Models;
+using DotNetMockyEndpointTask.Services.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ using NReco.Logging.File;
 
 namespace DotNetMockyEndpointTask.Services
 {
-    public class MockyApiService
+    public class MockyApiService : IMockyApiService
     {
         public MockyApiService(IConfiguration configuration, HttpClient httpClient, IMemoryCache productsCache, ILogger<FileLogger> logger)
         {
